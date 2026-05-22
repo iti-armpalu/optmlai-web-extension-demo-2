@@ -26,7 +26,7 @@ export function CaptureConfirm({
     const isDisplayable = imageUrl.startsWith('data:') || imageUrl.startsWith('blob:')
 
     return (
-        <div className="fixed bottom-[88px] right-[316px] z-40 w-[280px] rounded-xl border bg-background shadow-xl shadow-black/10 flex flex-col overflow-hidden">
+        <div className="fixed bottom-3 right-[320px] z-[55] w-[300px] rounded-xl border shadow-xl shadow-black/10 flex flex-col overflow-hidden" style={{ background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(20px)' }}>
 
             {/* Header */}
             <div className="flex items-center justify-between px-3 pt-3 pb-2">
@@ -44,14 +44,14 @@ export function CaptureConfirm({
             </div>
 
             {/* Image preview */}
-            <div className="mx-3 overflow-hidden border bg-muted relative flex items-center justify-center">
+            <div className="mx-3 rounded-lg overflow-hidden border bg-muted relative flex items-center justify-center">
                 {isDisplayable && !imgError ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                         src={imageUrl}
                         alt="Captured creative"
                         className="w-full h-auto block"
-                        style={{ maxHeight: 180, objectFit: 'contain' }}
+                        style={{ maxHeight: 200, objectFit: 'contain' }}
                         onError={() => setImgError(true)}
                     />
                 ) : (
@@ -82,18 +82,27 @@ export function CaptureConfirm({
                 ) : (
                     <>
                         {/* Credit notice */}
-                        <div className="flex items-start gap-2.5 rounded-lg bg-muted/60 px-3 py-2.5">
-                            <Coins className="w-3.5 h-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                        <div className={`flex items-start gap-2.5 rounded-lg px-3 py-2.5 ${hasCredits ? 'bg-muted/60' : 'bg-destructive/8 border border-destructive/20'}`}>
+                            <Coins className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 ${hasCredits ? 'text-muted-foreground' : 'text-destructive'}`} />
                             <div className="flex-1 min-w-0">
-                                <p className="text-[11px] text-muted-foreground leading-snug">
-                                    Running this report uses{' '}
-                                    <span className="font-semibold text-foreground">1 credit</span>.
-                                    You have{' '}
-                                    <span className={`font-semibold ${hasCredits ? 'text-foreground' : 'text-destructive'}`}>
-                                        {creditBalance} credit{creditBalance !== 1 ? 's' : ''}
-                                    </span>{' '}
-                                    remaining.
-                                </p>
+                                {hasCredits ? (
+                                    <p className="text-[11px] text-muted-foreground leading-snug">
+                                        Running this report uses{' '}
+                                        <span className="font-semibold text-foreground">1 credit</span>.
+                                        You have{' '}
+                                        <span className="font-semibold text-foreground">
+                                            {creditBalance} credit{creditBalance !== 1 ? 's' : ''}
+                                        </span>{' '}
+                                        remaining.
+                                    </p>
+                                ) : (
+                                    <p className="text-[11px] text-destructive leading-snug">
+                                        You have no credits remaining —{' '}
+                                        <button className="font-semibold underline underline-offset-2 hover:opacity-80 transition-opacity">
+                                            purchase more to continue
+                                        </button>
+                                    </p>
+                                )}
                             </div>
                         </div>
 

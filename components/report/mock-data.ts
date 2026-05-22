@@ -42,6 +42,9 @@ export interface MockReportData {
     cognitiveInsight: string
     fixes: Fix[]
     heatmapInsight: string
+    fixationZones: { label: string; pct: number }[]
+    benchmarkNote: string
+    fixConnection: string
     contexts: ContextCard[]
 }
 
@@ -88,6 +91,13 @@ export function getMockData(_report: Report): MockReportData {
             },
         ],
         heatmapInsight: 'Attention clusters strongly on the headline and product visual. The CTA receives only 12% of fixations — well below the 30% benchmark for high-performing display ads.',
+        fixationZones: [
+            { label: 'Headline', pct: 68 },
+            { label: 'Product visual', pct: 20 },
+            { label: 'CTA', pct: 12 },
+        ],
+        benchmarkNote: 'For display ads, CTA elements should capture 25–35% of fixations. This creative is below benchmark.',
+        fixConnection: 'Low CTA fixation is the structural cause of fix #1 in Creative Fixes.',
         contexts: [
             // ── Retail ──
             {

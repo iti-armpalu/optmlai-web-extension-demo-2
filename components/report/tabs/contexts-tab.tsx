@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { CheckCircle2, AlertTriangle, XCircle, ChevronDown, Clock, Lock } from 'lucide-react'
+import { CheckCircle2, ChevronDown, Clock, Lock } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import type { MockReportData, ContextCard, ContextChannel, ContextNote } from '../mock-data'
+import type { MockReportData, ContextCard, ContextChannel } from '../mock-data'
 import type { Report } from '../../shared/types'
 
 interface ContextsTabProps {
@@ -15,7 +15,6 @@ interface ContextsTabProps {
 
 const STATUS_CONFIG = {
     'run-it': {
-        icon: CheckCircle2,
         label: 'Run it',
         description: 'This creative is ready to deploy in this environment without changes.',
         color: 'text-green-600',
@@ -25,7 +24,6 @@ const STATUS_CONFIG = {
         dot: 'bg-green-500',
     },
     'fix-first': {
-        icon: AlertTriangle,
         label: 'Fix first',
         description: 'Specific issues need resolving before this context will perform well.',
         color: 'text-amber-600',
@@ -35,7 +33,6 @@ const STATUS_CONFIG = {
         dot: 'bg-amber-500',
     },
     'wrong-context': {
-        icon: XCircle,
         label: 'Wrong context',
         description: 'This format or environment is fundamentally mismatched with the creative.',
         color: 'text-red-500',
@@ -57,7 +54,6 @@ const CHANNEL_CONFIG: Record<ContextChannel, { color: string; bg: string }> = {
 function InlineCard({ ctx, report }: { ctx: ContextCard; report: Report }) {
     const cfg = STATUS_CONFIG[ctx.status]
     const chCfg = CHANNEL_CONFIG[ctx.channel]
-    const Icon = cfg.icon
     const hasImage = report.thumbnailUrl?.startsWith('data:') || report.thumbnailUrl?.startsWith('blob:')
     const [activeObsIndex, setActiveObsIndex] = useState<number | null>(null)
     const activeObs = activeObsIndex !== null ? ctx.notes[activeObsIndex] : null
@@ -68,7 +64,6 @@ function InlineCard({ ctx, report }: { ctx: ContextCard; report: Report }) {
             {/* Recommendation header */}
             <div className={`${cfg.bg} px-5 py-4 border-b ${cfg.border}`}>
                 <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <Icon className={`w-4 h-4 ${cfg.color}`} />
                     <span className={`text-xs font-semibold uppercase tracking-wider ${cfg.color}`}>
                         {cfg.label}
                     </span>
@@ -206,6 +201,7 @@ function InlineCard({ ctx, report }: { ctx: ContextCard; report: Report }) {
 
 export function ContextsTab({ data, report, analysisStatus, onConfirmDetails }: ContextsTabProps) {
     const [openIds, setOpenIds] = useState<Set<string>>(new Set())
+    const [activeFilter, setActiveFilter] = useState<'all' | 'run-it' | 'fix-first' | 'wrong-context'>('all')
 
     const counts = {
         'run-it': data.contexts.filter(c => c.status === 'run-it').length,
@@ -213,10 +209,14 @@ export function ContextsTab({ data, report, analysisStatus, onConfirmDetails }: 
         'wrong-context': data.contexts.filter(c => c.status === 'wrong-context').length,
     }
 
+    const filteredContexts = activeFilter === 'all'
+        ? data.contexts
+        : data.contexts.filter(c => c.status === activeFilter)
+
     const grouped = CHANNEL_ORDER.map(channel => ({
         channel,
-        items: data.contexts.filter(c => c.channel === channel),
-    }))
+        items: filteredContexts.filter(c => c.channel === channel),
+    })).filter(g => g.items.length > 0)
 
     function toggleRow(id: string) {
         setOpenIds(prev => {
@@ -257,94 +257,127 @@ export function ContextsTab({ data, report, analysisStatus, onConfirmDetails }: 
             <div className="p-6 space-y-6">
 
                 {/* ── Summary stats ── */}
-                <div className="grid grid-cols-3 gap-3">
-                    {(['run-it', 'fix-first', 'wrong-context'] as const).map(s => {
-                        const cfg = STATUS_CONFIG[s]
-                        const Icon = cfg.icon
-                        return (
-                            <div key={s} className={`rounded-xl border ${cfg.border} ${cfg.bg} px-4 py-3 flex gap-3`}>
-                                <Icon className={`w-5 h-5 flex-shrink-0 ${cfg.color} mt-0.5`} />
-                                <div className="min-w-0">
-                                    <div className="flex items-baseline gap-1.5">
-                                        <p className={`text-xl font-bold tabular-nums ${cfg.color}`}>{counts[s]}</p>
-                                        <p className={`text-xs font-semibold ${cfg.color}`}>{cfg.label}</p>
+                <div className="space-y-2">
+                    <div>
+                        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Context summary</h3>
+                        <p className="text-[11px] text-muted-foreground/70 mt-0.5">Click a card to filter contexts by status.</p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                        {(['run-it', 'fix-first', 'wrong-context'] as const).map(s => {
+                            const cfg = STATUS_CONFIG[s]
+                            return (
+                                <button
+                                    key={s}
+                                    onClick={() => setActiveFilter(activeFilter === s ? 'all' : s)}
+                                    className={`rounded-xl border ${cfg.border} ${cfg.bg} px-4 py-3 text-left w-full transition-all ${activeFilter === s ? 'ring-2 ring-offset-1 ring-current' : 'hover:opacity-80'
+                                        }`}
+                                >
+                                    <div className="min-w-0">
+                                        <div className="flex items-baseline gap-1.5">
+                                            <p className={`text-xl font-bold tabular-nums ${cfg.color}`}>{counts[s]}</p>
+                                            <p className={`text-xs font-semibold ${cfg.color}`}>{cfg.label}</p>
+                                        </div>
+                                        <p className="text-[10px] text-muted-foreground leading-snug mt-0.5">{cfg.description}</p>
                                     </div>
-                                    <p className="text-[10px] text-muted-foreground leading-snug mt-0.5">{cfg.description}</p>
-                                </div>
-                            </div>
-                        )
-                    })}
+                                </button>
+                            )
+                        })}
+                    </div>
                 </div>
 
                 {/* ── Accordion table ── */}
                 <section className="space-y-3">
-                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        All contexts
-                    </h3>
-
-                    <div className="rounded-xl border overflow-hidden">
-                        {/* Table header */}
-                        <div className="grid grid-cols-[1fr_auto_auto_auto] bg-muted/50 border-b px-4 py-2.5 text-xs font-medium text-muted-foreground gap-4">
-                            <span>Context</span>
-                            <span className="hidden sm:block">Exposure</span>
-                            <span>Status</span>
-                            <span />
-                        </div>
-
-                        {grouped.map(({ channel, items }) => (
-                            <div key={channel}>
-                                {/* Channel header */}
-                                <div className="px-4 py-1.5 border-b border-t bg-muted/20">
-                                    <span className={`text-[10px] font-semibold uppercase tracking-wider ${CHANNEL_CONFIG[channel].color}`}>
-                                        {channel}
-                                    </span>
-                                </div>
-
-                                {/* Context rows */}
-                                {items.map((ctx, i) => {
-                                    const cfg = STATUS_CONFIG[ctx.status]
-                                    const isOpen = openIds.has(ctx.id)
-                                    const isLast = i === items.length - 1
-
-                                    return (
-                                        <div key={ctx.id}>
-                                            {/* Row */}
-                                            <button
-                                                onClick={() => toggleRow(ctx.id)}
-                                                className={`w-full grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 px-4 py-3 text-left transition-colors ${!isLast || isOpen ? 'border-b' : 'border-b-0'
-                                                    } ${isOpen ? 'border-b-0' : 'hover:bg-muted/40 border-b'}`}
-                                            >
-                                                <div>
-                                                    <p className="text-xs font-medium">{ctx.name}</p>
-                                                    <p className="text-[10px] text-muted-foreground/60 mt-0.5 leading-tight">
-                                                        {ctx.environmentDescription}
-                                                    </p>
-                                                </div>
-                                                <div className="hidden sm:flex items-center gap-1 text-[11px] text-muted-foreground whitespace-nowrap">
-                                                    <Clock className="w-3 h-3" />
-                                                    {ctx.exposureTime}
-                                                </div>
-                                                <div className="flex items-center gap-1.5">
-                                                    <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${cfg.dot}`} />
-                                                    <span className={`text-xs font-medium ${cfg.color} whitespace-nowrap`}>{cfg.label}</span>
-                                                </div>
-                                                <ChevronDown
-                                                    className={`w-3.5 h-3.5 text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-                                                />
-                                            </button>
-
-                                            {/* Inline expanded card */}
-                                            {isOpen && (
-                                                <div className="mx-3 mb-3 rounded-xl overflow-hidden shadow-sm border border-border">
-                                                    <InlineCard ctx={ctx} report={report} />
-                                                </div>
-                                            )}
-                                        </div>
-                                    )
-                                })}
-                            </div>
-                        ))}
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                            {activeFilter === 'all' ? 'All contexts' : `${STATUS_CONFIG[activeFilter].label} contexts`}
+                        </h3>
+                        {activeFilter !== 'all' && (
+                            <button onClick={() => setActiveFilter('all')} className="text-[11px] text-muted-foreground underline underline-offset-2 hover:text-foreground">
+                                Clear filter
+                            </button>
+                        )}
                     </div>
+
+                    {/* No contexts at all */}
+                    {data.contexts.length === 0 && (
+                        <p className="text-sm text-muted-foreground text-center py-8">No context analysis available yet.</p>
+                    )}
+
+                    {/* Filter returns no results */}
+                    {data.contexts.length > 0 && filteredContexts.length === 0 && (
+                        <div className="text-center py-8 space-y-2">
+                            <p className="text-sm text-muted-foreground">No contexts match this filter.</p>
+                            <button onClick={() => setActiveFilter('all')} className="text-xs underline underline-offset-2 text-muted-foreground hover:text-foreground">
+                                Clear filter
+                            </button>
+                        </div>
+                    )}
+
+                    {filteredContexts.length > 0 && (
+                        <div className="rounded-xl border overflow-hidden">
+                            {/* Table header */}
+                            <div className="grid grid-cols-[1fr_auto_auto_auto] bg-muted/50 border-b px-4 py-2.5 text-xs font-medium text-muted-foreground gap-4">
+                                <span>Context</span>
+                                <span className="hidden sm:block">Exposure</span>
+                                <span>Status</span>
+                                <span />
+                            </div>
+
+                            {grouped.map(({ channel, items }) => (
+                                <div key={channel}>
+                                    {/* Channel header */}
+                                    <div className="px-4 py-1.5 border-b border-t bg-muted/20">
+                                        <span className={`text-[10px] font-semibold uppercase tracking-wider ${CHANNEL_CONFIG[channel].color}`}>
+                                            {channel}
+                                        </span>
+                                    </div>
+
+                                    {/* Context rows */}
+                                    {items.map((ctx, i) => {
+                                        const cfg = STATUS_CONFIG[ctx.status]
+                                        const isOpen = openIds.has(ctx.id)
+                                        const isLast = i === items.length - 1
+
+                                        return (
+                                            <div key={ctx.id}>
+                                                {/* Row */}
+                                                <button
+                                                    onClick={() => toggleRow(ctx.id)}
+                                                    className={`w-full grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 px-4 py-3 text-left transition-colors ${!isLast || isOpen ? 'border-b' : 'border-b-0'
+                                                        } ${isOpen ? 'border-b-0' : 'hover:bg-muted/40 border-b'}`}
+                                                >
+                                                    <div>
+                                                        <p className="text-xs font-medium">{ctx.name}</p>
+                                                        <p className="text-[10px] text-muted-foreground/60 mt-0.5 leading-tight">
+                                                            {ctx.environmentDescription}
+                                                        </p>
+                                                    </div>
+                                                    <div className="hidden sm:flex items-center gap-1 text-[11px] text-muted-foreground whitespace-nowrap">
+                                                        <Clock className="w-3 h-3" />
+                                                        {ctx.exposureTime}
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${cfg.dot}`} />
+                                                        <span className={`text-xs font-medium ${cfg.color} whitespace-nowrap`}>{cfg.label}</span>
+                                                    </div>
+                                                    <ChevronDown
+                                                        className={`w-3.5 h-3.5 text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                                                    />
+                                                </button>
+
+                                                {/* Inline expanded card */}
+                                                {isOpen && (
+                                                    <div className="mx-3 mb-3 rounded-xl overflow-hidden shadow-sm border border-border">
+                                                        <InlineCard ctx={ctx} report={report} />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </section>
 
             </div>

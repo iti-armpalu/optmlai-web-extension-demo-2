@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import {
-  X, GripVertical, MessageSquare, BarChart2,
+  X, GripVertical,
   Pencil, Check, Plus, Tag, Clock, Lock, CheckCircle2,
-  Download, Share2, MoreHorizontal,
+  Download, Share2, MoreHorizontal, AlertCircle, RefreshCw,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import type { Report, AnalysisStatus, CreativeDetails } from '../shared/types'
 import { getMockData } from './mock-data'
+import { generateTitle } from '../shared/generate-title'
 import { ChatPanel } from './chat-panel'
 import { OverviewTab } from './tabs/overview-tab'
 import { HeatmapTab } from './tabs/heatmap-tab'
@@ -36,25 +37,6 @@ const MIN_REPORT_WIDTH = 320
 const MIN_CHAT_WIDTH = 280
 const DEFAULT_SPLIT = 0.58
 
-// Generates a contextual title from report metadata — hardcoded for now
-function generateTitle(report: Report): string {
-  if (!report.metadata) return report.label ?? 'Creative report'
-
-  const intentMap: Record<string, string> = {
-    'Product launch': 'Product Launch Creative',
-    'E-commerce conversion': 'E-commerce Conversion Ad',
-    'Brand awareness': 'Brand Awareness Campaign',
-  }
-
-  for (const [key, title] of Object.entries(intentMap)) {
-    if (report.metadata.inferredIntent.includes(key)) {
-      return `${title} — ${report.metadata.format}`
-    }
-  }
-
-  return `${report.metadata.format} Analysis`
-}
-
 function formatTimestamp(date: Date): string {
   return date.toLocaleDateString('en-US', {
     month: 'short', day: 'numeric', year: 'numeric',
@@ -70,6 +52,7 @@ export function ReportDrawer({ report, isOpen, onClose, analysisStatus, creative
   const dragStartSplit = useRef(DEFAULT_SPLIT)
   const [split, setSplit] = useState(DEFAULT_SPLIT)
   const [activeTab, setActiveTab] = useState<'overview' | 'heatmap' | 'contexts'>('overview')
+  const tabContentRef = useRef<HTMLDivElement>(null)
   const [mounted, setMounted] = useState(false)
 
   // Editable title
@@ -98,10 +81,38 @@ export function ReportDrawer({ report, isOpen, onClose, analysisStatus, creative
     if (isAddingTag) tagInputRef.current?.focus()
   }, [isAddingTag])
 
-  // Slide animation
+  // Slide animation + reset state on open
   useEffect(() => {
-    if (isOpen) requestAnimationFrame(() => setMounted(true))
-    else setMounted(false)
+    if (isOpen) {
+      requestAnimationFrame(() => setMounted(true))
+      setSplit(DEFAULT_SPLIT)
+      setActiveTab('overview')
+    } else {
+      setMounted(false)
+    }
+  }, [isOpen])
+
+  // Focus trap
+  useEffect(() => {
+    if (!isOpen) return
+    const drawer = containerRef.current?.closest('[data-drawer]') as HTMLElement | null
+    if (!drawer) return
+    const focusable = drawer.querySelectorAll<HTMLElement>(
+      'a,button,input,select,textarea,[tabindex]:not([tabindex="-1"])'
+    )
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+    function onTab(e: KeyboardEvent) {
+      if (e.key !== 'Tab') return
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last?.focus() }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first?.focus() }
+      }
+    }
+    window.addEventListener('keydown', onTab)
+    first?.focus()
+    return () => window.removeEventListener('keydown', onTab)
   }, [isOpen])
 
   // Escape key
@@ -116,6 +127,11 @@ export function ReportDrawer({ report, isOpen, onClose, analysisStatus, creative
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose, isEditingTitle, isAddingTag])
+
+  function switchTab(tab: 'overview' | 'heatmap' | 'contexts') {
+    setActiveTab(tab)
+    if (tabContentRef.current) tabContentRef.current.scrollTop = 0
+  }
 
   function commitTitle() {
     if (!title.trim()) setTitle(report ? generateTitle(report) : 'Creative report')
@@ -184,6 +200,7 @@ export function ReportDrawer({ report, isOpen, onClose, analysisStatus, creative
 
       {/* Drawer */}
       <div
+        data-drawer="true"
         className="fixed inset-y-0 right-0 z-[61] flex flex-col border-l shadow-2xl transition-transform duration-300 ease-out backdrop-blur-xl"
         style={{
           width: 'calc(100vw - 48px)',
@@ -378,10 +395,10 @@ export function ReportDrawer({ report, isOpen, onClose, analysisStatus, creative
               {(['overview', 'heatmap', 'contexts'] as const).map((tab) => (
                 <button
                   key={tab}
-                  onClick={() => setActiveTab(tab)}
+                  onClick={() => switchTab(tab)}
                   className={`px-4 py-3 text-xs font-medium capitalize border-b-2 transition-colors -mb-px ${activeTab === tab
-                    ? 'border-foreground text-foreground'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                      ? 'border-foreground text-foreground'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
                     }`}
                 >
                   {tab}
@@ -390,20 +407,38 @@ export function ReportDrawer({ report, isOpen, onClose, analysisStatus, creative
             </div>
 
             {/* Tab content */}
-            <div className="flex-1 overflow-y-auto">
-              {report && activeTab === 'overview' && (
+            <div ref={tabContentRef} className="flex-1 overflow-y-auto">
+              {/* Error state */}
+              {report?.status === 'error' && (
+                <div className="flex flex-col items-center justify-center h-full gap-4 text-center px-8">
+                  <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center">
+                    <AlertCircle className="w-5 h-5 text-destructive" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold">Report generation failed</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed max-w-xs">
+                      {report.errorMessage ?? 'Something went wrong while generating this report.'}
+                    </p>
+                  </div>
+                  <Button size="sm" variant="outline" className="gap-2" onClick={onClose}>
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    Close and retry
+                  </Button>
+                </div>
+              )}
+              {report && report.status !== 'error' && activeTab === 'overview' && (
                 <OverviewTab
                   data={getMockData(report)}
                   report={report}
                   analysisStatus={analysisStatus}
-                  onGoToContexts={() => setActiveTab('contexts')}
+                  onGoToContexts={() => switchTab('contexts')}
                   onConfirmDetails={onConfirmDetails}
                 />
               )}
-              {report && activeTab === 'heatmap' && (
-                <HeatmapTab data={getMockData(report)} report={report} />
+              {report && report.status !== 'error' && activeTab === 'heatmap' && (
+                <HeatmapTab data={getMockData(report)} report={report} analysisStatus={analysisStatus} creativeDetails={creativeDetails} />
               )}
-              {report && activeTab === 'contexts' && (
+              {report && report.status !== 'error' && activeTab === 'contexts' && (
                 <ContextsTab
                   data={getMockData(report)}
                   report={report}
