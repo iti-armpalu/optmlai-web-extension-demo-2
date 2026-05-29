@@ -4,7 +4,6 @@ import { useState, useMemo, useEffect } from 'react'
 import {
     X, Search, Grid3X3, List, Clock, CheckCircle2, AlertCircle,
     MoreHorizontal, Pencil, Trash2, ChevronLeft, ChevronRight,
-    Crosshair, Upload, MousePointer, Images,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,9 +17,6 @@ interface AllReportsDrawerProps {
     onOpenReport: (id: string) => void
     onRenameReport: (id: string, label: string) => void
     onDeleteReport: (id: string) => void
-    onAreaSelect: () => void
-    onUploadClick: () => void
-    creditBalance: number
 }
 
 type SortOrder = 'newest' | 'oldest' | 'name'
@@ -34,13 +30,6 @@ function formatDate(date: Date) {
         hour: 'numeric', minute: '2-digit',
     }).format(new Date(date))
 }
-
-const CAPTURE_ACTIONS = [
-    { id: 'area', label: 'Select area', Icon: Crosshair },
-    { id: 'upload', label: 'Upload image', Icon: Upload },
-    { id: 'click', label: 'Click element', Icon: MousePointer },
-    { id: 'captures', label: 'From captures', Icon: Images },
-]
 
 function StatusBadge({ status }: { status: Report['status'] }) {
     if (status === 'complete') return (
@@ -174,7 +163,6 @@ function ReportRowList({ report, onOpen, onRename, onDelete }: {
 
 export function AllReportsDrawer({
     isOpen, onClose, reports, onOpenReport, onRenameReport, onDeleteReport,
-    onAreaSelect, onUploadClick, creditBalance,
 }: AllReportsDrawerProps) {
     const [mounted, setMounted] = useState(false)
     const [search, setSearch] = useState('')
@@ -209,7 +197,6 @@ export function AllReportsDrawer({
 
     const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
     const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
-    const hasCredits = creditBalance > 0
 
     if (!isOpen && !mounted) return null
 
@@ -257,39 +244,6 @@ export function AllReportsDrawer({
 
                 {/* ── Body ── */}
                 <div className="flex flex-1 min-h-0">
-
-                    {/* ── Left: new capture panel ── */}
-                    <div className="w-56 flex-shrink-0 border-r flex flex-col bg-muted/20 p-4 gap-4">
-                        <div>
-                            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">New capture</p>
-                            <div className="space-y-1.5">
-                                {CAPTURE_ACTIONS.map(({ id, label, Icon }) => (
-                                    <button
-                                        key={id}
-                                        disabled={!hasCredits}
-                                        onClick={() => {
-                                            if (id === 'area') { onAreaSelect(); onClose() }
-                                            else if (id === 'upload') { onUploadClick(); onClose() }
-                                        }}
-                                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg border bg-background hover:bg-muted/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-left"
-                                    >
-                                        <Icon className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-                                        <span className="text-xs font-medium">{label}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Credits */}
-                        <div className={`rounded-lg px-3 py-2 text-[11px] leading-snug ${hasCredits ? 'bg-muted/60 text-muted-foreground' : 'bg-destructive/10 text-destructive'}`}>
-                            {hasCredits
-                                ? <><span className="font-semibold text-foreground">{creditBalance}</span> credit{creditBalance !== 1 ? 's' : ''} remaining</>
-                                : <>No credits remaining — <button className="underline underline-offset-2 font-medium">purchase more</button></>
-                            }
-                        </div>
-                    </div>
-
-                    {/* ── Right: reports list ── */}
                     <div className="flex-1 flex flex-col min-w-0">
 
                         {/* Toolbar */}

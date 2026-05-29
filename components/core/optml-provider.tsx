@@ -132,9 +132,6 @@ export function OptmlProvider() {
         onOpenReport={(id) => { setOpenReportId(id); setShowAllReports(false) }}
         onRenameReport={renameReport}
         onDeleteReport={deleteReport}
-        onAreaSelect={startAreaSelection}
-        onUploadClick={handleUploadClick}
-        creditBalance={creditBalance}
       />
 
       {/* Confirm details dialog — always mounted */}

@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { Badge } from '@/components/ui/badge'
 import { X, Zap, Coins, ImageIcon, Loader2, CheckCircle2 } from 'lucide-react'
 
 interface CaptureConfirmProps {
@@ -109,18 +108,11 @@ export function CaptureConfirm({
                         {/* Actions */}
                         <div className="flex flex-col gap-1.5">
                             <Button
-                                className="w-full h-9 gap-2 text-xs font-semibold"
+                                className="w-full h-9 text-sm font-semibold rounded-xl cursor-pointer"
                                 onClick={onConfirm}
                                 disabled={!hasCredits}
                             >
-                                <Zap className="w-3.5 h-3.5" />
                                 Run report
-                                <Badge
-                                    variant="secondary"
-                                    className="ml-auto text-[10px] px-1.5 py-0 h-4 bg-white/20 text-white border-0"
-                                >
-                                    1 credit
-                                </Badge>
                             </Button>
 
                             {!hasCredits && (
@@ -132,7 +124,7 @@ export function CaptureConfirm({
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="w-full h-8 text-xs text-muted-foreground hover:text-foreground"
+                                className="w-full h-8 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
                                 onClick={onDiscard}
                             >
                                 Discard

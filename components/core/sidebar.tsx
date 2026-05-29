@@ -263,7 +263,7 @@ export function OptmlSidebar({
   const captureActions = [
     { label: 'Select area', icon: Crosshair, onClick: () => guardedCapture(onAreaSelect) },
     { label: 'Upload image', icon: Upload, onClick: () => guardedCapture(onUploadClick) },
-    { label: 'Click element', icon: MousePointerClick, onClick: () => guardedCapture(() => onCapture('click', makePlaceholder('Click capture'), 'Click capture')) },
+    { label: 'Select element', icon: MousePointerClick, onClick: () => guardedCapture(() => onCapture('click', makePlaceholder('Select capture'), 'Select capture')) },
     { label: 'From captures', icon: GalleryHorizontalEnd, onClick: () => guardedCapture(onFromCaptures) },
   ]
 
@@ -410,7 +410,7 @@ export function OptmlSidebar({
           {isLoggedIn ? (
             <div className="flex items-center gap-2">
               {/* Left — opens user actions dialog */}
-              <button className="flex items-center gap-2.5 flex-1 min-w-0 px-2 py-2 rounded-xl hover:bg-white/60 transition-colors text-left" onClick={() => setShowUserDialog(true)}>
+              <button className="flex items-center gap-2.5 flex-1 min-w-0 px-2 py-2 rounded-xl hover:bg-muted/60 transition-colors text-left cursor-pointer" onClick={() => setShowUserDialog(true)}>
                 <Avatar className="h-8 w-8 rounded-lg flex-shrink-0">
                   <AvatarImage src={MOCK_USER.avatar} alt={MOCK_USER.name} />
                   <AvatarFallback className="rounded-lg text-xs bg-neutral-900 text-white">

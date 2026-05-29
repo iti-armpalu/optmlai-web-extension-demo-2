@@ -21,7 +21,7 @@ function formatDate(date: Date) {
 const METHOD_LABELS: Record<string, string> = {
     area: 'Area selection',
     upload: 'Upload',
-    click: 'Click element',
+    click: 'Select element',
     saved: 'From captures',
 }
 
@@ -84,7 +84,7 @@ export function FromCapturesDrawer({
                     {captures.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full gap-2 text-center px-6">
                             <p className="text-sm font-medium">No captures yet</p>
-                            <p className="text-xs text-muted-foreground">Use Select area, Upload, or Click element to capture a creative first.</p>
+                            <p className="text-xs text-muted-foreground">Use Select area, Upload, or Select element to capture a creative first.</p>
                         </div>
                     ) : (
                         <div className="p-3 space-y-2">
