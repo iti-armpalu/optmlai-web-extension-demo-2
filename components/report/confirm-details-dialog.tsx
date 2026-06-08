@@ -258,6 +258,8 @@ export function ConfirmDetailsDialog({
     }
     setElements(prev => [...prev, newEl])
     setActiveId(newEl.id)
+    setEditingId(newEl.id)
+    setEditLabel(newEl.label)
     setIsDrawing(false)
     setDrawRect(null)
     setDrawingCategory(null)
@@ -460,8 +462,8 @@ export function ConfirmDetailsDialog({
                           <button
                             onClick={() => setDrawingCategory(category)}
                             className={`flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded transition-colors ${drawingCategory === category
-                                ? 'bg-emerald-100 text-emerald-700'
-                                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                               }`}
                           >
                             <Plus className="w-2.5 h-2.5" />
@@ -541,7 +543,10 @@ export function ConfirmDetailsDialog({
                                 {/* Descriptors */}
                                 {descs && (
                                   <div className="space-y-1">
-                                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Content attributes</p>
+                                    <div className="flex items-center justify-between">
+                                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Content attributes</p>
+                                      <p className="text-[9px] text-muted-foreground/60">Select all that apply</p>
+                                    </div>
                                     <div className="space-y-1.5">
                                       {descs.map(d => (
                                         <label key={d} className="flex items-center gap-2 cursor-pointer">
@@ -601,57 +606,20 @@ export function ConfirmDetailsDialog({
             <div className="flex flex-col flex-1 min-h-0">
               <div className="p-6 space-y-6 flex-1 overflow-y-auto">
 
-                {/* Channel */}
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm font-semibold">Channel</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Select the primary channel where this creative will run.</p>
+                {/* Placeholder — follow Andrej's implementation */}
+                <div className="flex flex-col items-center justify-center h-full gap-3 text-center py-16">
+                  <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+                    <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-muted-foreground" stroke="currentColor" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
+                    </svg>
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {CHANNELS.map(c => (
-                      <button
-                        key={c.value}
-                        disabled={isReadOnly}
-                        onClick={() => setChannel(c.value)}
-                        className={`text-left px-4 py-3 rounded-xl border transition-colors ${channel === c.value ? 'border-emerald-400 bg-emerald-50' : 'border-border hover:bg-muted/50'
-                          } ${isReadOnly ? 'opacity-60 cursor-default' : 'cursor-pointer'}`}
-                      >
-                        <p className="text-sm font-medium">{c.label}</p>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">{c.description}</p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Purpose */}
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm font-semibold">Purpose</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Select the primary objective this creative is designed to achieve.</p>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {PURPOSES.map(p => (
-                      <button
-                        key={p.value}
-                        disabled={isReadOnly}
-                        onClick={() => setPurpose(p.value)}
-                        className={`text-left px-4 py-3 rounded-xl border transition-colors ${purpose === p.value ? 'border-emerald-400 bg-emerald-50' : 'border-border hover:bg-muted/50'
-                          } ${isReadOnly ? 'opacity-60 cursor-default' : 'cursor-pointer'}`}
-                      >
-                        <p className="text-sm font-medium">{p.label}</p>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">{p.description}</p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {!isReadOnly && (
-                  <div className="rounded-lg bg-muted/40 border px-4 py-3">
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">
-                      Analysis will be generated using the confirmed elements, channel, and purpose. These cannot be changed after generation.
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">Channel & Purpose</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed max-w-[240px]">
+                      Channel and purpose selection with add/remove options — follow Andrej's implementation.
                     </p>
                   </div>
-                )}
+                </div>
               </div>
 
               {/* Step 2 footer */}

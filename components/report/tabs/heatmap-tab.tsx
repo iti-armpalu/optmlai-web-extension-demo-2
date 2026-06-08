@@ -6,13 +6,12 @@ import {
   ComparisonHandle,
 } from '@/components/ui/image-comparison'
 import type { MockReportData } from '../mock-data'
-import type { Report, CreativeDetails } from '../../shared/types'
+import type { Report } from '../../shared/types'
 
 interface HeatmapTabProps {
   data: MockReportData
   report: Report
   analysisStatus: 'pending' | 'complete'
-  creativeDetails?: CreativeDetails
 }
 
 function HeatmapOverlaySvg() {
@@ -24,23 +23,23 @@ function HeatmapOverlaySvg() {
     >
       <defs>
         <radialGradient id="hm-headline" cx="30%" cy="30%" r="32%">
-          <stop offset="0%"   stopColor="#ccff00" stopOpacity="0.92" />
-          <stop offset="30%"  stopColor="#66ff00" stopOpacity="0.70" />
-          <stop offset="65%"  stopColor="#00cc44" stopOpacity="0.35" />
+          <stop offset="0%" stopColor="#ccff00" stopOpacity="0.92" />
+          <stop offset="30%" stopColor="#66ff00" stopOpacity="0.70" />
+          <stop offset="65%" stopColor="#00cc44" stopOpacity="0.35" />
           <stop offset="100%" stopColor="#00aa33" stopOpacity="0" />
         </radialGradient>
         <radialGradient id="hm-visual" cx="78%" cy="65%" r="26%">
-          <stop offset="0%"   stopColor="#aaff00" stopOpacity="0.80" />
-          <stop offset="40%"  stopColor="#44dd00" stopOpacity="0.50" />
+          <stop offset="0%" stopColor="#aaff00" stopOpacity="0.80" />
+          <stop offset="40%" stopColor="#44dd00" stopOpacity="0.50" />
           <stop offset="100%" stopColor="#00aa33" stopOpacity="0" />
         </radialGradient>
         <radialGradient id="hm-cta" cx="20%" cy="83%" r="16%">
-          <stop offset="0%"   stopColor="#00ff88" stopOpacity="0.55" />
-          <stop offset="60%"  stopColor="#00cc66" stopOpacity="0.25" />
+          <stop offset="0%" stopColor="#00ff88" stopOpacity="0.55" />
+          <stop offset="60%" stopColor="#00cc66" stopOpacity="0.25" />
           <stop offset="100%" stopColor="#009944" stopOpacity="0" />
         </radialGradient>
         <radialGradient id="hm-bg" cx="55%" cy="50%" r="55%">
-          <stop offset="0%"   stopColor="#003311" stopOpacity="0.20" />
+          <stop offset="0%" stopColor="#003311" stopOpacity="0.20" />
           <stop offset="100%" stopColor="#001a08" stopOpacity="0" />
         </radialGradient>
       </defs>
@@ -53,57 +52,25 @@ function HeatmapOverlaySvg() {
 }
 
 const INTENSITY_SCALE = [
-  { label: 'Very high', sub: '>80%'    },
-  { label: 'High',      sub: '60–80%'  },
-  { label: 'Medium',    sub: '40–60%'  },
-  { label: 'Low',       sub: '20–40%'  },
-  { label: 'Very low',  sub: '<20%'    },
+  { label: 'Very high', sub: '>80%' },
+  { label: 'High', sub: '60–80%' },
+  { label: 'Medium', sub: '40–60%' },
+  { label: 'Low', sub: '20–40%' },
+  { label: 'Very low', sub: '<20%' },
 ]
 
-export function HeatmapTab({ data, report, analysisStatus, creativeDetails }: HeatmapTabProps) {
+export function HeatmapTab({ data, report, analysisStatus }: HeatmapTabProps) {
   const hasImage = report.thumbnailUrl?.startsWith('data:') || report.thumbnailUrl?.startsWith('blob:')
-
-  // Build fixation zones from confirmed elements if available
-  // Distribute mock percentages across however many elements were confirmed
-  const fixationZones = (() => {
-    const elements = creativeDetails?.detectedElements
-    if (!elements || elements.length === 0) return data.fixationZones
-
-    // Assign mock percentages — first element gets highest, tapers off
-    // Values are illustrative only — real values come from CV/ML backend
-    const mockPcts = [68, 20, 12, 8, 5, 4, 3]
-    const total = mockPcts.slice(0, elements.length).reduce((a, b) => a + b, 0)
-
-    return elements.map((el, i) => {
-      const parts = el.split(': ')
-      const label = parts.length > 1 ? parts[1] : parts[0]
-      // Normalise so they sum to 100
-      const pct = Math.round((mockPcts[i] ?? 2) / total * 100)
-      return { label, pct }
-    })
-  })()
 
   return (
     <div className="p-6 space-y-6">
 
-      {/* ── Fixation zones ── */}
-      <div className="space-y-2.5">
-        <div>
-          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Fixation zones
-          </h3>
-          <p className="text-[11px] text-muted-foreground/70 mt-0.5">
-            Percentage of predicted eye fixations captured by each element.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {fixationZones.map(({ label, pct }) => (
-            <div key={label} className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-muted/30">
-              <p className="text-sm font-bold tabular-nums">{pct}%</p>
-              <p className="text-[11px] text-muted-foreground">{label}</p>
-            </div>
-          ))}
-        </div>
+      {/* ── Key insight ── */}
+      <div className="rounded-xl border bg-muted/40 px-4 py-3">
+        <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1">
+          Key insight
+        </p>
+        <p className="text-sm leading-relaxed text-foreground">{data.heatmapInsight}</p>
       </div>
 
       {/* ── Attention overlay ── */}
